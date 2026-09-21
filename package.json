@@ -1,0 +1,19 @@
+{
+  "name": "xcloud-blog-workflow",
+  "version": "1.0.0",
+  "description": "Git-native workflow for writing the xCloud blog: scaffold a post, optimise its image, score its SEO, then publish.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "blog:new": "node scripts/blog-new.mjs",
+    "blog:seo": "node scripts/blog-seo.mjs",
+    "gen-blog-webp": "node scripts/gen-blog-webp.mjs",
+    "dev": "node scripts/dev-server.mjs"
+  },
+  "optionalDependencies": {
+    "sharp": "^0.33.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

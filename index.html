@@ -1,0 +1,399 @@
+<title>Blog in Git</title>
+<meta name="description" content="Five animated steps for shipping an xCloud blog post from git, no WordPress required.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  :root {
+    --ink: #100f17;
+    --surface: #17151f;
+    --surface-2: #1e1b29;
+    --line: #2c2837;
+    --text: #f1eef7;
+    --text-dim: #a9a3bd;
+    --text-faint: #726c87;
+    --violet: #a78bfa;
+    --violet-dim: #7c5cf0;
+    --teal: #2dd9c4;
+    --amber: #fbbf5e;
+    --ok-bg: rgba(45, 217, 196, 0.12);
+    --warn-bg: rgba(251, 191, 94, 0.12);
+    --shadow: 0 20px 60px -20px rgba(0,0,0,0.6);
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --ink: #faf9fc;
+      --surface: #ffffff;
+      --surface-2: #f3f1f9;
+      --line: #e4e0ef;
+      --text: #1a1725;
+      --text-dim: #57506c;
+      --text-faint: #918aa6;
+      --violet: #7c5cf0;
+      --violet-dim: #6845e0;
+      --teal: #0e9c88;
+      --amber: #b5750f;
+      --ok-bg: rgba(14, 156, 136, 0.08);
+      --warn-bg: rgba(181, 117, 15, 0.08);
+      --shadow: 0 20px 50px -25px rgba(60, 40, 100, 0.25);
+    }
+  }
+  :root[data-theme="light"] {
+    --ink: #faf9fc;
+    --surface: #ffffff;
+    --surface-2: #f3f1f9;
+    --line: #e4e0ef;
+    --text: #1a1725;
+    --text-dim: #57506c;
+    --text-faint: #918aa6;
+    --violet: #7c5cf0;
+    --violet-dim: #6845e0;
+    --teal: #0e9c88;
+    --amber: #b5750f;
+    --ok-bg: rgba(14, 156, 136, 0.08);
+    --warn-bg: rgba(181, 117, 15, 0.08);
+    --shadow: 0 20px 50px -25px rgba(60, 40, 100, 0.25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--ink);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding-inline: 20px;
+    padding-block: 48px;
+    overflow-x: hidden;
+  }
+
+  .wrap { max-width: 760px; margin: 0 auto; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    text-align: center;
+    margin-bottom: 64px;
+    opacity: 0;
+    animation: rise 0.7s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal);
+    background: var(--ok-bg);
+    border: 1px solid color-mix(in srgb, var(--teal) 35%, transparent);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+  }
+  .kicker .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--teal);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  h1 {
+    font-family: "Fraunces", Georgia, serif;
+    font-weight: 700;
+    font-size: clamp(2.2rem, 7vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  h1 em {
+    font-style: italic;
+    font-weight: 400;
+    color: var(--violet);
+  }
+  .sub {
+    font-size: 17px;
+    color: var(--text-dim);
+    max-width: 46ch;
+    margin: 0 auto;
+    line-height: 1.55;
+  }
+  .sub strong { color: var(--text); font-weight: 600; }
+
+  /* ---------- Old vs new strip ---------- */
+  .swap {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 14px;
+    margin: 40px 0 68px;
+    opacity: 0;
+    animation: rise 0.7s cubic-bezier(.16,1,.3,1) 0.15s forwards;
+  }
+  .swap-side {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 13.5px;
+  }
+  .swap-side.old { color: var(--text-faint); text-decoration: line-through; text-decoration-color: var(--text-faint); }
+  .swap-side.new { color: var(--teal); font-family: "JetBrains Mono", monospace; font-weight: 500; border-color: color-mix(in srgb, var(--teal) 30%, var(--line)); }
+  .swap-arrow { color: var(--violet); font-size: 20px; }
+
+  /* ---------- Step rail ---------- */
+  .rail { position: relative; }
+  .rail::before {
+    content: "";
+    position: absolute;
+    left: 23px;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    background: linear-gradient(var(--line), var(--line) 90%, transparent);
+  }
+
+  .step {
+    position: relative;
+    padding-left: 66px;
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(18px);
+    animation: rise 0.6s cubic-bezier(.16,1,.3,1) forwards;
+  }
+  .step:nth-of-type(1) { animation-delay: 0.05s; }
+  .step:nth-of-type(2) { animation-delay: 0.12s; }
+  .step:nth-of-type(3) { animation-delay: 0.19s; }
+  .step:nth-of-type(4) { animation-delay: 0.26s; }
+  .step:nth-of-type(5) { animation-delay: 0.33s; }
+
+  .num {
+    position: absolute;
+    left: 0; top: 0;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--violet);
+    z-index: 1;
+    transition: transform 0.25s cubic-bezier(.16,1,.3,1), border-color 0.25s, box-shadow 0.25s;
+  }
+  .step:hover .num {
+    transform: scale(1.08);
+    border-color: var(--violet);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--violet) 15%, transparent);
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+    transition: border-color 0.25s ease, transform 0.25s ease;
+  }
+  .step:hover .card { border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); transform: translateY(-2px); }
+
+  .card h2 {
+    font-family: "Fraunces", serif;
+    font-weight: 600;
+    font-size: 21px;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card .why {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 0 0 14px;
+    line-height: 1.5;
+  }
+
+  .cmd {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px 16px;
+    overflow-x: auto;
+    color: var(--teal);
+    position: relative;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .cmd:hover { border-color: color-mix(in srgb, var(--teal) 45%, var(--line)); }
+  .cmd .flag { color: var(--violet); }
+  .cmd .comment { color: var(--text-faint); }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.03em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-top: 12px;
+  }
+  .tag.warn { background: var(--warn-bg); color: var(--amber); }
+  .tag.ok { background: var(--ok-bg); color: var(--teal); }
+
+  /* ---------- Field ref table ---------- */
+  .fields {
+    margin-top: 56px;
+    opacity: 0;
+    animation: rise 0.6s cubic-bezier(.16,1,.3,1) 0.1s forwards;
+  }
+  .fields h2 {
+    font-family: "Fraunces", serif;
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .fields p { color: var(--text-dim); font-size: 14px; margin: 0 0 18px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .field {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px 14px;
+    transition: transform 0.2s cubic-bezier(.16,1,.3,1), border-color 0.2s;
+  }
+  .field:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--violet) 40%, var(--line)); }
+  .field code {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px;
+    color: var(--violet);
+    font-weight: 500;
+  }
+  .field .note { font-size: 12px; color: var(--text-faint); margin-top: 5px; line-height: 1.4; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    margin-top: 64px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-faint);
+    opacity: 0;
+    animation: rise 0.6s cubic-bezier(.16,1,.3,1) 0.2s forwards;
+  }
+  footer a { color: var(--violet); text-decoration: none; border-bottom: 1px dotted currentColor; }
+  footer a:hover { color: var(--teal); }
+
+  @keyframes rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.75); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    .hero, .swap, .step, .fields, footer { opacity: 1; transform: none; }
+  }
+
+  @media (max-width: 480px) {
+    .swap { grid-template-columns: 1fr; }
+    .swap-arrow { transform: rotate(90deg); justify-self: center; }
+    .step { padding-left: 56px; }
+    .num { width: 40px; height: 40px; font-size: 15px; }
+    .rail::before { left: 19px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <div class="hero">
+    <span class="kicker"><span class="dot"></span> git &gt; wordpress</span>
+    <h1>Ship a post in <em>five</em> moves</h1>
+    <p class="sub">No dashboard. No plugin spinner. Just <strong>one file</strong>, one command per stage, and a live URL when you merge.</p>
+  </div>
+
+  <div class="swap">
+    <div class="swap-side old">WordPress dashboard</div>
+    <div class="swap-arrow">→</div>
+    <div class="swap-side new">$ npm run blog:*</div>
+  </div>
+
+  <div class="rail">
+
+    <div class="step">
+      <div class="num">1</div>
+      <div class="card">
+        <h2>Start the post</h2>
+        <p class="why">Scaffolds the file, frontmatter and all. Replaces "Add New Post."</p>
+        <div class="cmd">npm run blog:new -- <span class="flag">"Post Title"</span> --category Guide</div>
+        <span class="tag warn">⚠ never rename the slug after publish</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">2</div>
+      <div class="card">
+        <h2>Write with Claude Code</h2>
+        <p class="why">Ask it to draft, fill the frontmatter, and tune SEO. Then you just review the diff.</p>
+        <div class="cmd"><span class="comment">"Draft the post, ~1200 words, 4 FAQs, then run blog:seo and fix anything under 90."</span></div>
+        <span class="tag ok">✓ prefer this over writing markdown by hand</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">3</div>
+      <div class="card">
+        <h2>Set the featured image</h2>
+        <p class="why">One image becomes the thumbnail, social card, and hero. Then compress it.</p>
+        <div class="cmd">npm run gen-blog-webp</div>
+        <span class="tag warn">⚠ raw PNGs run ~1MB — always webp it down to ~40KB</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">4</div>
+      <div class="card">
+        <h2>Score the SEO</h2>
+        <p class="why">The Rank Math replacement. Scores 0 to 100 and names the exact fix.</p>
+        <div class="cmd">npm run blog:seo -- your-post-slug</div>
+        <span class="tag ok">✓ aim for 80+ before publishing</span>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="num">5</div>
+      <div class="card">
+        <h2>Preview and merge</h2>
+        <p class="why">Check it locally, flip draft off and open the PR. The archive updates itself.</p>
+        <div class="cmd">npm run dev <span class="comment">→ localhost:4321/blog/</span></div>
+        <span class="tag ok">✓ merge = live, no sitemap edits needed</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="fields">
+    <h2>Frontmatter at a glance</h2>
+    <p>Every field the file needs, nothing more.</p>
+    <div class="grid">
+      <div class="field"><code>title</code><div class="note">≤60 chars, keep "- xCloud"</div></div>
+      <div class="field"><code>slug</code><div class="note">the URL. locked once live</div></div>
+      <div class="field"><code>ogImage</code><div class="note">thumb + social + hero</div></div>
+      <div class="field"><code>focusKeyword</code><div class="note">unlocks SEO checks</div></div>
+      <div class="field"><code>faqs</code><div class="note">rich result in search</div></div>
+      <div class="field"><code>draft</code><div class="note">true hides from archive</div></div>
+    </div>
+  </div>
+
+  <footer>
+    Full reference in the repo at <code style="font-family:'JetBrains Mono',monospace">docs/BLOG_AUTHORING.md</code>
+  </footer>
+
+</div>
